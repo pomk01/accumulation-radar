@@ -56,17 +56,27 @@ VOL_BREAKOUT_MULT = 3.0       # 当日Vol > 3x均值 = 放量
 def api_get(endpoint, params=None):
     """币安API请求"""
     url = f"{FAPI}{endpoint}"
+    headers = {"User-Agent": "accumulation-radar/1.0"}
+    last_error = None
+
     for attempt in range(3):
         try:
-            resp = requests.get(url, params=params, timeout=10)
+            resp = requests.get(url, params=params, headers=headers, timeout=10)
             if resp.status_code == 200:
                 return resp.json()
             elif resp.status_code == 429:
-                time.sleep(2)
+                print(f"⚠️ Binance 429 限流: {endpoint} attempt={attempt+1}")
+                time.sleep(2 * (attempt + 1))
             else:
-                return None
-        except:
+                last_error = f"status={resp.status_code} body={resp.text[:200]}"
+                print(f"⚠️ Binance API失败: {endpoint} {last_error}")
+                time.sleep(1)
+        except requests.RequestException as e:
+            last_error = repr(e)
+            print(f"⚠️ Binance 请求异常: {endpoint} {last_error}")
             time.sleep(1)
+
+    print(f"⚠️ Binance API最终失败: {endpoint} error={last_error}")
     return None
 
 
