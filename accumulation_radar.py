@@ -507,7 +507,10 @@ def save_watchlist(conn, results):
     """保存标的池到数据库"""
     c = conn.cursor()
     now = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M")
-    
+
+    # 本轮结果之外的旧标的先清掉，避免历史残留导致误判
+    c.execute("DELETE FROM watchlist")
+
     for r in results:
         c.execute("""INSERT OR REPLACE INTO watchlist 
             (symbol, coin, added_date, sideways_days, range_pct, avg_vol, 
@@ -516,7 +519,7 @@ def save_watchlist(conn, results):
             (r["symbol"], r["coin"], now, r["sideways_days"], r["range_pct"],
              r["avg_vol"], r["low_price"], r["high_price"], r["current_price"],
              r["score"], r["status"]))
-    
+
     conn.commit()
     print(f"  💾 保存 {len(results)} 个标的到数据库")
 
