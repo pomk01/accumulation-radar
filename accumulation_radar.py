@@ -106,12 +106,23 @@ def init_db():
 def get_all_perp_symbols():
     """获取所有USDT永续合约"""
     info = api_get("/fapi/v1/exchangeInfo")
-    if not info:
+    if not info or not isinstance(info, dict):
+        print(f"⚠️ exchangeInfo 获取失败: type={type(info).__name__}")
         return []
-    return [s["symbol"] for s in info["symbols"]
-            if s["quoteAsset"] == "USDT" 
-            and s["contractType"] == "PERPETUAL"
-            and s["status"] == "TRADING"]
+
+    symbols = info.get("symbols")
+    if not isinstance(symbols, list):
+        print(f"⚠️ exchangeInfo 缺少 symbols 字段: keys={list(info.keys())[:10]}")
+        return []
+
+    result = [
+        s["symbol"] for s in symbols
+        if s.get("quoteAsset") == "USDT"
+        and s.get("contractType") == "PERPETUAL"
+        and s.get("status") == "TRADING"
+    ]
+    print(f"✅ exchangeInfo 返回 {len(symbols)} 个symbols，筛出 {len(result)} 个USDT永续")
+    return result
 
 
 def analyze_accumulation(symbol, klines):
