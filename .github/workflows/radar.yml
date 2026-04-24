@@ -9,6 +9,9 @@ jobs:
   run-radar:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+      TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,17 +27,37 @@ jobs:
           pip install requests
 
       - name: Prepare env file
-        env:
-          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
-          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
         run: |
           cat > .env.oi <<EOF
           TG_BOT_TOKEN=${TG_BOT_TOKEN}
           TG_CHAT_ID=${TG_CHAT_ID}
           EOF
 
-      - name: Run pool scan
-        run: python accumulation_radar.py pool
+      - name: Debug env file
+        run: |
+          echo ".env.oi exists: $(test -f .env.oi && echo yes || echo no)"
+          echo "TG_BOT_TOKEN length: $(python - <<'PY'
+from pathlib import Path
+p=Path('.env.oi')
+text=p.read_text() if p.exists() else ''
+val=''
+for line in text.splitlines():
+    if line.startswith('TG_BOT_TOKEN='):
+        val=line.split('=',1)[1]
+print(len(val))
+PY
+)"
+          echo "TG_CHAT_ID length: $(python - <<'PY'
+from pathlib import Path
+p=Path('.env.oi')
+text=p.read_text() if p.exists() else ''
+val=''
+for line in text.splitlines():
+    if line.startswith('TG_CHAT_ID='):
+        val=line.split('=',1)[1]
+print(len(val))
+PY
+)"
 
-      - name: Run OI scan
-        run: python accumulation_radar.py oi
+      - name: Run full scan
+        run: python accumulation_radar.py full
