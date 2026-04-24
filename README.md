@@ -146,6 +146,53 @@ python3 accumulation_radar.py full
 - 无AI调用，无付费API Key
 - 币安API免费，限速宽松
 
+## GitHub Actions 免费部署（测试阶段推荐）
+
+适合**免费测试运行**。由于 GitHub Actions 本地文件系统不持久，本仓库采用每次任务都先跑 `pool` 再跑 `oi` 的方式，避免依赖上一次的 SQLite 状态。
+
+### 已内置工作流
+
+仓库已包含：
+
+- `.github/workflows/radar.yml`
+- 触发方式：
+  - 每 6 小时自动运行一次
+  - 支持在 GitHub 网页里手动点击 **Run workflow**
+
+### 你需要配置的 GitHub Secrets
+
+进入仓库：`Settings` → `Secrets and variables` → `Actions` → `New repository secret`
+
+添加这两个：
+
+- `TG_BOT_TOKEN`
+- `TG_CHAT_ID`
+
+可直接复用 `.env.oi` 里的两个值。
+
+### 运行逻辑
+
+每次 workflow 会执行：
+
+```bash
+python accumulation_radar.py pool
+python accumulation_radar.py oi
+```
+
+### 手动测试
+
+1. 打开仓库的 **Actions**
+2. 选择 `accumulation-radar`
+3. 点击 **Run workflow**
+4. 等待执行完成
+5. Telegram 应收到推送
+
+### 注意事项
+
+- GitHub Actions 适合**测试阶段 / 低成本运行**
+- 因为 SQLite 不持久，所以它不是完全等价于长期常驻服务器
+- 如果你后面要长期稳定运行，推荐迁移到 Oracle Cloud Free VM
+
 ## License
 
 MIT
