@@ -30,28 +30,25 @@ jobs:
 
       - name: Prepare env file
         run: |
-          {
-            echo "TG_BOT_TOKEN=${TG_BOT_TOKEN}"
-            echo "TG_CHAT_ID=${TG_CHAT_ID}"
-          } > .env.oi
+          printf 'TG_BOT_TOKEN=%s\nTG_CHAT_ID=%s\n' "$TG_BOT_TOKEN" "$TG_CHAT_ID" > .env.oi
 
       - name: Debug env presence
         run: |
           test -s .env.oi
           python - <<'PY'
-from pathlib import Path
-text = Path('.env.oi').read_text()
-vals = {}
-for line in text.splitlines():
-    if '=' in line:
-        k, v = line.split('=', 1)
-        vals[k] = v
-print('env_file_exists', True)
-print('token_present', bool(vals.get('TG_BOT_TOKEN')))
-print('chat_present', bool(vals.get('TG_CHAT_ID')))
-print('token_len', len(vals.get('TG_BOT_TOKEN', '')))
-print('chat_len', len(vals.get('TG_CHAT_ID', '')))
-PY
+          from pathlib import Path
+          text = Path('.env.oi').read_text()
+          vals = {}
+          for line in text.splitlines():
+              if '=' in line:
+                  k, v = line.split('=', 1)
+                  vals[k] = v
+          print('env_file_exists', True)
+          print('token_present', bool(vals.get('TG_BOT_TOKEN')))
+          print('chat_present', bool(vals.get('TG_CHAT_ID')))
+          print('token_len', len(vals.get('TG_BOT_TOKEN', '')))
+          print('chat_len', len(vals.get('TG_CHAT_ID', '')))
+          PY
 
       - name: Run full scan
         run: python accumulation_radar.py full
