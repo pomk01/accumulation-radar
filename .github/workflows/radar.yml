@@ -1,6 +1,8 @@
 name: accumulation-radar
 
-on:
+run-name: accumulation-radar
+
+'on':
   workflow_dispatch:
   schedule:
     - cron: '0 */6 * * *'
@@ -28,36 +30,28 @@ jobs:
 
       - name: Prepare env file
         run: |
-          cat > .env.oi <<EOF
-          TG_BOT_TOKEN=${TG_BOT_TOKEN}
-          TG_CHAT_ID=${TG_CHAT_ID}
-          EOF
+          {
+            echo "TG_BOT_TOKEN=${TG_BOT_TOKEN}"
+            echo "TG_CHAT_ID=${TG_CHAT_ID}"
+          } > .env.oi
 
-      - name: Debug env file
+      - name: Debug env presence
         run: |
-          echo ".env.oi exists: $(test -f .env.oi && echo yes || echo no)"
-          echo "TG_BOT_TOKEN length: $(python - <<'PY'
+          test -s .env.oi
+          python - <<'PY'
 from pathlib import Path
-p=Path('.env.oi')
-text=p.read_text() if p.exists() else ''
-val=''
+text = Path('.env.oi').read_text()
+vals = {}
 for line in text.splitlines():
-    if line.startswith('TG_BOT_TOKEN='):
-        val=line.split('=',1)[1]
-print(len(val))
+    if '=' in line:
+        k, v = line.split('=', 1)
+        vals[k] = v
+print('env_file_exists', True)
+print('token_present', bool(vals.get('TG_BOT_TOKEN')))
+print('chat_present', bool(vals.get('TG_CHAT_ID')))
+print('token_len', len(vals.get('TG_BOT_TOKEN', '')))
+print('chat_len', len(vals.get('TG_CHAT_ID', '')))
 PY
-)"
-          echo "TG_CHAT_ID length: $(python - <<'PY'
-from pathlib import Path
-p=Path('.env.oi')
-text=p.read_text() if p.exists() else ''
-val=''
-for line in text.splitlines():
-    if line.startswith('TG_CHAT_ID='):
-        val=line.split('=',1)[1]
-print(len(val))
-PY
-)"
 
       - name: Run full scan
         run: python accumulation_radar.py full
